@@ -45,6 +45,16 @@ class TestCategories(unittest.TestCase):
 
 		delete_category(created.id)
 
+	def test_get_category_by_name(self):
+		created = create_category("test")
+
+		got = get_category_by_name(created.name)
+		self.assertEqual(created.id, got.id)
+		self.assertEqual(created.name, got.name)
+		self.assertEqual(created.description, got.description)
+
+		delete_category(created.id)
+
 	def test_update_category(self):
 		category = create_category("test", "test_description")
 

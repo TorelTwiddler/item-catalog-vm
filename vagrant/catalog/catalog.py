@@ -106,9 +106,21 @@ def get_category(category_id):
 					   "FROM categories WHERE id = %s", [category_id])
 		category_data = cursor.fetchone()
 		if not category_data:
-			raise NotFoundException("Item not found [{0}]".format(category_id))
+			raise NotFoundException("Category not found [{0}]".format(category_id))
 	 	return Category(*category_data)
 
+
+def get_category_by_name(name):
+    """
+    Get the category by the given name.
+    """
+    with with_cursor() as cursor:
+        cursor.execute("SELECT id, name, description " \
+                       "FROM categories WHERE name = %s", [name])
+        category_data = cursor.fetchone()
+        if not category_data:
+            raise NotFoundException("Category not found [{0}].".format(name))
+        return Category(*category_data)
 
 def update_category(category_id, name, description):
     """
