@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+  <head>
+    {% block head %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.1.4/semantic.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.1.4/semantic.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css')}}"/>
+
+    <script>
+      $(document)
+        .ready(function() {
+          $('.ui.menu a.item')
+            .on('click', function() {
+              $(this)
+                .addClass('active')
+                .siblings()
+                .removeClass('active')
+              ;
+            })
+          ;
+        })
+      ;
+    </script>
+
+    <title>{% block title %}Item Catalog{% endblock %}</title>
+    {% endblock %}
+  </head>
+  <body>
+      <div class="ui fixed inverted menu">
+        <div class="ui container">
+          <div href="/" class="header item">
+            <img class="logo" src="{{ url_for('static', filename='images/blue_shell.jpg') }}">
+            Item Catalog
+          </div>
+          <a href="/" class="item">Home</a>
+        </div>
+      </div>
+
+      <div class="ui main text container">
+        {% block content %}{% endblock %}
+      </div>
+
+      <div class="ui inverted vertical footer segment">
+        <div class="ui center aligned container">
+        </div>
+      </div>
+  </body>
+</html>

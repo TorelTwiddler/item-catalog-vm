@@ -22,18 +22,32 @@ def with_cursor():
     the cursor and the connection will always close regardless
     of errors.
     """
-    conn = psycopg2.connect("dbname=item_catalog")
-    cur = conn.cursor()
+    connection = psycopg2.connect("dbname=item_catalog")
+    cursor = connection.cursor()
     try:
-        yield cur
+        yield cursor
     except:
         raise
     else:
-        conn.commit()
+        connection.commit()
     finally:
-        cur.close()
-        conn.close()
+        cursor.close()
+        connection.close()
 
+
+def clear_database():
+    """
+    WARNING: This will truncate everything in your database!
+    Only use this if you know what you're doing!
+    """
+    with with_cursor() as cursor:
+        cursor.execute("TRUNCATE items;")
+        cursor.execute("TRUNCATE categories CASCADE;")
+
+
+# ----------------------------------------------------
+# ------------- Item Functions -----------------------
+# ----------------------------------------------------
 
 def create_item(name, category_id, description=""):
     """
@@ -41,7 +55,7 @@ def create_item(name, category_id, description=""):
     """
     with with_cursor() as cursor:
         cursor.execute("INSERT INTO items (name, category, description) " \
-                       "VALUES (%s, %s, %s) RETURNING id, name, category, description",
+                       "VALUES (%s, %s, %s) RETURNING id, name, category, description;",
                        (name, category_id, description))
         return Item(*cursor.fetchone())
 
@@ -59,7 +73,7 @@ def get_item(item_id):
 	"""
 	with with_cursor() as cursor:
 		cursor.execute("SELECT id, name, category, description " \
-					   "FROM items WHERE id = %s", [item_id])
+					   "FROM items WHERE id = %s;", [item_id])
 		item_data = cursor.fetchone()
 		if not item_data:
 			raise NotFoundException("Item not found [{0}]".format(item_id))
@@ -72,7 +86,7 @@ def update_item(item_id, name, category_id, description):
     """
     with with_cursor() as cursor:
         cursor.execute("UPDATE items SET name = %s, category = %s, description = %s " \
-                       "WHERE id = %s RETURNING id, name, category, description",
+                       "WHERE id = %s RETURNING id, name, category, description;",
                        (name, category_id, description, item_id))
         return Item(*cursor.fetchone())
 
@@ -86,13 +100,17 @@ def delete_item(item_id):
                        (item_id,))
 
 
+# ----------------------------------------------------
+# --------- Category Functions -----------------------
+# ----------------------------------------------------
+
 def create_category(name, description=""):
     """
     Creates a category with the given parameters.
     """
     with with_cursor() as cursor:
         cursor.execute("INSERT INTO categories (name, description) " \
-                       "VALUES (%s, %s) RETURNING id, name, description",
+                       "VALUES (%s, %s) RETURNING id, name, description;",
                        (name, description))
         return Category(*cursor.fetchone())
 
@@ -103,7 +121,7 @@ def get_category(category_id):
     """
     with with_cursor() as cursor:
 		cursor.execute("SELECT id, name, description " \
-					   "FROM categories WHERE id = %s", [category_id])
+					   "FROM categories WHERE id = %s;", [category_id])
 		category_data = cursor.fetchone()
 		if not category_data:
 			raise NotFoundException("Category not found [{0}]".format(category_id))
@@ -116,7 +134,7 @@ def get_category_by_name(name):
     """
     with with_cursor() as cursor:
         cursor.execute("SELECT id, name, description " \
-                       "FROM categories WHERE name = %s", [name])
+                       "FROM categories WHERE name = %s;", [name])
         category_data = cursor.fetchone()
         if not category_data:
             raise NotFoundException("Category not found [{0}].".format(name))
@@ -128,7 +146,7 @@ def update_category(category_id, name, description):
     """
     with with_cursor() as cursor:
         cursor.execute("UPDATE categories SET name = %s, description = %s " \
-                       "WHERE id = %s RETURNING id, name, description",
+                       "WHERE id = %s RETURNING id, name, description;",
                        (name, description, category_id))
         return Category(*cursor.fetchone())
 
@@ -140,3 +158,12 @@ def delete_category(category_id):
     with with_cursor() as cursor:
         cursor.execute("DELETE FROM categories WHERE id = %s",
                        (category_id,))
+
+
+def get_all_categories():
+    """
+    Returns a list of all of the categories available.
+    """
+    with with_cursor() as cursor:
+        cursor.execute("SELECT id, name, description FROM categories;")
+        return map(lambda x: Category(*x), cursor.fetchall())

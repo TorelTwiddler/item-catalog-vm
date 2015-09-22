@@ -15,6 +15,8 @@ class TestConnection(unittest.TestCase):
 
 
 class TestCategories(unittest.TestCase):
+	def setUp(self):
+		clear_database()
 
 	def test_create_category(self):
 		category = create_category("test", "test_description")
@@ -84,9 +86,21 @@ class TestCategories(unittest.TestCase):
 		with self.assertRaises(NotFoundException):
 			get_category(category2.id)
 
+	def test_get_categories(self):
+		category = create_category("test")
+		category2 = create_category("test2")
+
+		categories = get_all_categories()
+		self.assertIn(category, categories)
+		self.assertIn(category2, categories)
+
+		delete_category(category.id)
+		delete_category(category2.id)
+
 
 class TestItems(unittest.TestCase):
 	def setUp(self):
+		clear_database()
 		self.category = create_category("Test Category")
 		self.category2 = create_category("Test Category 2")
 
