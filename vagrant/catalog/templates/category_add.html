@@ -1,6 +1,22 @@
 {% extends "base.html" %}
+{% from "_macros.html" import render_field %}
+
 {% block content %}
-<form action="{{ url_for('category_add') }}">
-	
-</form>
+    {% if form.errors %}
+        <div class="ui error message">
+            <ul class="list">
+                {% for field, messages in form.errors.items() %}
+                    {% for message in messages %}
+                        <li>{{ field.capitalize() }} - {{ message }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+    <form action="{{ url_for('category_add') }}" method="POST" class="ui form">
+        {{ form.hidden_tag() }}
+        {{ render_field(form.name) }}
+        {{ render_field(form.description) }}
+        <input class="ui submit button" type="submit" value="Submit">
+    </form>
 {% endblock %}

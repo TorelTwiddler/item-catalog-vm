@@ -2,7 +2,6 @@
 catalog.py is a module used to access the "item_catalog" database.
 """
 
-
 import psycopg2
 import contextlib
 from collections import namedtuple
@@ -61,23 +60,23 @@ def create_item(name, category_id, description=""):
 
 
 def get_item(item_id):
-	"""
-	Returns an Item with the given item_id.
+    """
+    Returns an Item with the given item_id.
 
-	@param item_id: the id of the desired item.
-	@type item_id: int
-	@return: the Item with the given id.
-	@rtype: Item
-	@raise: NotFoundException if the given id is not found
-		in the database.
-	"""
-	with with_cursor() as cursor:
-		cursor.execute("SELECT id, name, category, description " \
-					   "FROM items WHERE id = %s;", [item_id])
-		item_data = cursor.fetchone()
-		if not item_data:
-			raise NotFoundException("Item not found [{0}]".format(item_id))
-	 	return Item(*item_data)
+    @param item_id: the id of the desired item.
+    @type item_id: int
+    @return: the Item with the given id.
+    @rtype: Item
+    @raise: NotFoundException if the given id is not found
+        in the database.
+    """
+    with with_cursor() as cursor:
+        cursor.execute("SELECT id, name, category, description "
+                       "FROM items WHERE id = %s;", [item_id])
+        item_data = cursor.fetchone()
+        if not item_data:
+            raise NotFoundException("Item not found [{0}]".format(item_id))
+        return Item(*item_data)
 
 
 def update_item(item_id, name, category_id, description):
@@ -120,12 +119,12 @@ def get_category(category_id):
     Gets the category with the given category_id.
     """
     with with_cursor() as cursor:
-		cursor.execute("SELECT id, name, description " \
-					   "FROM categories WHERE id = %s;", [category_id])
-		category_data = cursor.fetchone()
-		if not category_data:
-			raise NotFoundException("Category not found [{0}]".format(category_id))
-	 	return Category(*category_data)
+        cursor.execute("SELECT id, name, description " \
+                       "FROM categories WHERE id = %s;", [category_id])
+        category_data = cursor.fetchone()
+        if not category_data:
+            raise NotFoundException("Category not found [{0}]".format(category_id))
+        return Category(*category_data)
 
 
 def get_category_by_name(name):
@@ -139,6 +138,7 @@ def get_category_by_name(name):
         if not category_data:
             raise NotFoundException("Category not found [{0}].".format(name))
         return Category(*category_data)
+
 
 def update_category(category_id, name, description):
     """

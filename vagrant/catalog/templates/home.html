@@ -1,32 +1,44 @@
 {% extends "base.html" %}
 {% block content %}
-  <h1>Categories</h1>
-  <div class="ui pointing vertical menu">
-    {% for category in categories %}
-      {% if loop.first() %}
-        <a class="active item">
-          {{ category }}
-        </a>
-      {% else %}
-        <a class=" item">
-          {{ category }}
-        </a>
-      {% endif %}
-    {% else %}
-      <a class="active item disabled">
-        Sorry, no categories!
-      </a>
-    {% endfor %}
-    <div class="right menu">
-      <div class="item">
-        <a class="ui basic button" href="{{ url_for('category_add') }}">
-          <i class="icon plus"></i>
-          Add Category
-        </a>
-      </div>
+
+    {% if messages and messages.get('success') %}
+    <div class="ui success message">
+        <p>{{ messages['success'] }}</p>
     </div>
-  </div>
-  <div class="ui segment">
-    <p></p>
-  </div>
+    {% endif %}
+    {% if messages and messages.get('error') %}
+    <div class="ui error message">
+        <p>{{ messages['error'] }}</p>
+    </div>
+    {% endif %}
+
+    <h1>Categories</h1>
+    <div class="ui pointing vertical menu">
+        {% for category in categories %}
+            {% if loop.first %}
+                <a class="active item">
+                    {{ category.name }}
+                </a>
+            {% else %}
+                <a class="item">
+                    {{ category.name }}
+                </a>
+            {% endif %}
+        {% else %}
+            <a class="active item disabled">
+                Sorry, no categories!
+            </a>
+        {% endfor %}
+        <div class="right menu">
+            <div class="item">
+                <a class="ui basic button" href="{{ url_for('category_add') }}">
+                    <i class="icon plus"></i>
+                    Add Category
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="ui segment">
+        <p></p>
+    </div>
 {% endblock %}

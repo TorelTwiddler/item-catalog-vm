@@ -1,7 +1,6 @@
 <!doctype html>
 <html>
   <head>
-    {% block head %}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.1.4/semantic.css"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.1.4/semantic.min.js"></script>
@@ -22,9 +21,10 @@
         })
       ;
     </script>
+    {% block head %}
+    {% endblock %}
 
     <title>{% block title %}Item Catalog{% endblock %}</title>
-    {% endblock %}
   </head>
   <body>
       <div class="ui fixed inverted menu">
