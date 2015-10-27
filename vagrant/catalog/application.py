@@ -14,7 +14,11 @@ def root(messages=None):
 
 @app.route("/categories/<category_name>")
 def category(category_name):
-    return "Category: {0}".format(category_name)
+    category_item = catalog.get_category_by_name(category_name)
+    items = catalog.get_items_by_category(category_item.id)
+    return flask.render_template('category.html',
+                                 category=category_item,
+                                 items=items)
 
 
 @app.route("/categories/<category_name>/edit")

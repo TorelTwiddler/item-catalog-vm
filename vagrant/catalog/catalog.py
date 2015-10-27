@@ -99,6 +99,14 @@ def delete_item(item_id):
                        (item_id,))
 
 
+def get_items_by_category(category_id):
+    with with_cursor() as cursor:
+        cursor.execute("SELECT id, name, category, description FROM items "
+                       "WHERE category = %s;",
+                       (category_id, ))
+        return map(lambda x: Item(*x), cursor.fetchall())
+
+
 # ----------------------------------------------------
 # --------- Category Functions -----------------------
 # ----------------------------------------------------

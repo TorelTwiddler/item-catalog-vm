@@ -6,21 +6,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.1.4/semantic.min.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css')}}"/>
 
-    <script>
-      $(document)
-        .ready(function() {
-          $('.ui.menu a.item')
-            .on('click', function() {
-              $(this)
-                .addClass('active')
-                .siblings()
-                .removeClass('active')
-              ;
-            })
-          ;
-        })
-      ;
-    </script>
     {% block head %}
     {% endblock %}
 
@@ -29,10 +14,10 @@
   <body>
       <div class="ui fixed inverted menu">
         <div class="ui container">
-          <div href="/" class="header item">
+          <a href="/" class="header item">
             <img class="logo" src="{{ url_for('static', filename='images/blue_shell.jpg') }}">
             Item Catalog
-          </div>
+          </a>
           <a href="/" class="item">Home</a>
         </div>
       </div>
