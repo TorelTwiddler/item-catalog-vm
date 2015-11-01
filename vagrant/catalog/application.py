@@ -1,6 +1,7 @@
 import flask
 import catalog
 import category_forms
+import item_forms
 
 app = flask.Flask(__name__)
 
@@ -43,7 +44,8 @@ def category_delete(category_name):
 
 @app.route("/items/<int:item_id>")
 def item(item_id):
-    return "Item ID: {0}".format(item_id)
+    item_object = catalog.get_item(item_id)
+    return flask.render_template('item.html', item=item_object)
 
 
 @app.route("/items/<int:item_id>/edit")
@@ -56,9 +58,16 @@ def item_delete(item_id):
     return "Deleting Item ID: {0}".format(item_id)
 
 
-@app.route("/items/add")
+@app.route("/items/add", methods=['GET', 'POST'])
 def item_add():
-    return "Adding Item."
+    form = item_forms.ItemAddForm()
+    form.category.choices = [(x.id, x.name) for x in catalog.get_all_categories()]
+    if form.validate_on_submit():
+        catalog.create_item(form.name.data, int(form.category.data),
+                            form.description.data)
+        return root({'success': "Item added successfully!"})
+    print form.errors
+    return flask.render_template('item_add.html', form=form)
 
 
 app.secret_key = 'T\xec9*\xb1\x11\xdd@\x94\xd5\xbeqD\xa9\xa4\xb4\xa8\xaf\x02\xe8]\xc6\xc3\xdc'

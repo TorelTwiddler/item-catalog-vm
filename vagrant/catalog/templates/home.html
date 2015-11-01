@@ -2,27 +2,24 @@
 
 {% block head %}
     <script>
-        $(document)
-            .ready(function () {
-                $('.ui.menu a.item')
-                    .on('click', function () {
-                        $(this)
-                            .addClass('active')
-                            .siblings()
-                            .removeClass('active');
-                    });
-            });
-    </script>
-    <script>
-        function select_category(category_name) {
-            $.get("categories/" + category_name, function(data){
+        function activate_menu_item(object) {
+            object
+                    .addClass('active')
+                    .siblings()
+                    .removeClass('active');
+        }
+        function select_category(category_name, id) {
+            $.get("/categories/" + category_name, function (data) {
                 $("#item-menu").html(data);
             });
+            $("#item-details").html('');
+            activate_menu_item($(id));
         }
-        function select_item(item_id) {
-            $.get("items/" + item_id, function(data){
+        function select_item(item_id, id) {
+            $.get("/items/" + item_id, function (data) {
                 $("#item-details").html(data);
             });
+            activate_menu_item($(id));
         }
     </script>
 {% endblock %}
@@ -30,32 +27,26 @@
 {% block content %}
 
     {% if messages and messages.get('success') %}
-    <div class="ui success message">
-        <p>{{ messages['success'] }}</p>
-    </div>
+        <div class="ui success message">
+            <p>{{ messages['success'] }}</p>
+        </div>
     {% endif %}
     {% if messages and messages.get('error') %}
-    <div class="ui error message">
-        <p>{{ messages['error'] }}</p>
-    </div>
+        <div class="ui error message">
+            <p>{{ messages['error'] }}</p>
+        </div>
     {% endif %}
 
     <h1>Categories</h1>
     <div class="ui grid">
-        <div class="six wide column">
+        <div class="five wide column">
             <div class="ui pointing vertical menu">
                 {% for category in categories %}
-                    {% if loop.first %}
-                        <a id="category_{{ category.id }}" class="active item"
-                           onclick="select_category('{{ category.name }}')">
-                            {{ category.name }}
-                        </a>
-                    {% else %}
-                        <a id="category_{{ category.id }}" class="item"
-                           onclick="select_category('{{ category.name }}')">
-                            {{ category.name }}
-                        </a>
-                    {% endif %}
+                    <a id="category_{{ category.id }}" class="item"
+                       onclick="select_category('{{ category.name }}',
+                               '#category_{{ category.id }}')">
+                        {{ category.name }}
+                    </a>
                 {% else %}
                     <a class="active item disabled">
                         Sorry, no categories!
@@ -71,11 +62,11 @@
                 </div>
             </div>
         </div>
-        <div class="six wide column">
-            <div id="item-menu" class="segment">
-                SHOULD BE REPLACED
-            </div>
+        <div class="five wide column">
+            <div id="item-menu" class="segment"></div>
         </div>
-
+        <div class="five wide column">
+            <div id="item-details" class="segment"></div>
+        </div>
     </div>
 {% endblock %}

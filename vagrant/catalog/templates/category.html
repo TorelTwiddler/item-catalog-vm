@@ -3,17 +3,11 @@
     <div class="ui info">{{ category.description }}</div>
     <div class="ui pointing vertical menu">
         {% for item in items %}
-            {% if loop.first %}
-                <a id="category_{{ item.id }}" class="active item"
-                   onclick="select_category('{{ item.id }}')">
-                    {{ item.name }}
-                </a>
-            {% else %}
-                <a id="category_{{ item.id }}" class="item"
-                   onclick="select_category('{{ item.id }}')">
-                    {{ item.name }}
-                </a>
-            {% endif %}
+            <a id="item_{{ item.id }}" class="item"
+               onclick="select_item('{{ item.id }}',
+                       '#item_{{ item.id }}')">
+                {{ item.name }}
+            </a>
         {% else %}
             <a class="active item disabled">
                 Sorry, no items!
@@ -26,11 +20,6 @@
                     Add Item
                 </a>
             </div>
-        </div>
-    </div>
-    <div class="six wide column">
-        <div id="item-details" class="segment">
-            SHOULD BE REPLACED
         </div>
     </div>
 </div>
