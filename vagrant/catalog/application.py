@@ -1,3 +1,5 @@
+import json
+import yaml
 import flask
 import catalog
 import category_forms
@@ -105,6 +107,16 @@ def item_add():
         return root({'success': "Item added successfully!"})
     print form.errors
     return flask.render_template('item_add.html', form=form)
+
+
+@app.route("/catalog.json")
+def json_endpoint():
+    return json.dumps(catalog.get_database_as_dict())
+
+
+@app.route("/catalog.yaml")
+def yaml_endpoint():
+    return yaml.dump(catalog.get_database_as_dict())
 
 
 app.secret_key = 'T\xec9*\xb1\x11\xdd@\x94\xd5\xbeqD\xa9\xa4\xb4\xa8\xaf\x02\xe8]\xc6\xc3\xdc'

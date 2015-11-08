@@ -44,6 +44,33 @@ def clear_database():
         cursor.execute("TRUNCATE categories CASCADE;")
 
 
+def get_database_as_dict():
+    """
+    Gets the entire database as a data dictionary. Good for
+    sending the database as json or yaml.
+    """
+    data_dict = {'Category': []}
+    categories = get_all_categories()
+    for category_object in categories:
+        items = get_items_by_category(category_object.id)
+        category_dict = {
+            'id': category_object.id,
+            'name': category_object.name,
+            'description': category_object.description,
+            'Item': [],
+        }
+        for item_object in items:
+            item_dict = {
+                'id': item_object.id,
+                'name': item_object.name,
+                'description': item_object.description,
+                'category': item_object.category,
+            }
+            category_dict['Item'].append(item_dict)
+        data_dict['Category'].append(category_dict)
+    return data_dict
+
+
 # ----------------------------------------------------
 # ------------- Item Functions -----------------------
 # ----------------------------------------------------
