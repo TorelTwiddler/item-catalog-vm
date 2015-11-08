@@ -22,9 +22,20 @@ def category(category_name):
                                  items=items)
 
 
-@app.route("/categories/<category_name>/edit")
+@app.route("/categories/<category_name>/edit", methods=["GET", "POST"])
 def category_edit(category_name):
-    return "Editing Category: {0}".format(category_name)
+    form = category_forms.CategoryEditForm()
+    category_object = catalog.get_category_by_name(category_name)
+    if form.validate_on_submit():
+        catalog.update_category(category_object.id,
+                                form.name.data,
+                                form.description.data)
+        return root({'success': "Category updated successfully!"})
+    print form.errors
+    form.name.data = category_object.name
+    form.description.data = category_object.description
+    return flask.render_template('category_edit.html', form=form,
+                                 category=category_object)
 
 
 @app.route("/category_add", methods=["GET", "POST"])
@@ -37,9 +48,15 @@ def category_add():
     return flask.render_template('category_add.html', form=form)
 
 
-@app.route("/categories/<category_name>/delete")
+@app.route("/categories/<category_name>/delete", methods=["GET", "POST"])
 def category_delete(category_name):
-    return "Deleting Category: {0}".format(category_name)
+    form = category_forms.CategoryDeleteForm()
+    category_object = catalog.get_category_by_name(category_name)
+    if form.validate_on_submit():
+        catalog.delete_category(category_object.id)
+        return root({'success': "Category deleted successfully!"})
+    return flask.render_template('category_delete.html', form=form,
+                                 category=category_object)
 
 
 @app.route("/items/<int:item_id>")
@@ -48,14 +65,34 @@ def item(item_id):
     return flask.render_template('item.html', item=item_object)
 
 
-@app.route("/items/<int:item_id>/edit")
+@app.route("/items/<int:item_id>/edit", methods=['GET', 'POST'])
 def item_edit(item_id):
-    return "Editing Item ID: {0}".format(item_id)
+    form = item_forms.ItemEditForm()
+    form.category.choices = [(x.id, x.name) for x in catalog.get_all_categories()]
+    item_object = catalog.get_item(item_id)
+    if form.validate_on_submit():
+        catalog.update_item(item_object.id,
+                            form.name.data,
+                            form.category.data,
+                            form.description.data)
+        return root({'success': "Item updated successfully!"})
+    print form.errors
+    form.name.data = item_object.name
+    form.category.data = item_object.category
+    form.description.data = item_object.description
+    return flask.render_template('item_edit.html', form=form,
+                                 item=item_object)
 
 
-@app.route("/items/<int:item_id>/delete")
+@app.route("/items/<int:item_id>/delete", methods=['GET', 'POST'])
 def item_delete(item_id):
-    return "Deleting Item ID: {0}".format(item_id)
+    form = item_forms.ItemDeleteForm()
+    item_object = catalog.get_item(item_id)
+    if form.validate_on_submit():
+        catalog.delete_item(item_object.id)
+        return root({'success': "Item deleted successfully!"})
+    return flask.render_template('item_delete.html', form=form,
+                                 item=item_object)
 
 
 @app.route("/items/add", methods=['GET', 'POST'])

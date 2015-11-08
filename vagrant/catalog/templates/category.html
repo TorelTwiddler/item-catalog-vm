@@ -1,6 +1,14 @@
 <div class="ui segment">
     <div class="ui header">{{ category.name }}</div>
     <div class="ui info">{{ category.description }}</div>
+    <a class="ui small basic icon button"
+       href="{{ url_for('category_edit', category_name=category.name) }}">
+        <i class="edit icon"></i>
+    </a>
+    <a class="ui small basic icon button"
+       href="{{ url_for('category_delete', category_name=category.name) }}">
+        <i class="delete icon"></i>
+    </a>
     <div class="ui pointing vertical menu">
         {% for item in items %}
             <a id="item_{{ item.id }}" class="item"

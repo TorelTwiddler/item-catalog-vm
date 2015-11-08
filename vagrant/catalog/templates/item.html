@@ -1,4 +1,12 @@
 <div class="ui segment">
     <div class="ui header">{{ item.name }}</div>
     <div class="ui info">{{ item.description }}</div>
+    <a class="ui small basic icon button"
+       href="{{ url_for('item_edit', item_id=item.id) }}">
+        <i class="edit icon"></i>
+    </a>
+    <a class="ui small basic icon button"
+       href="{{ url_for('item_delete', item_id=item.id) }}">
+        <i class="delete icon"></i>
+    </a>
 </div>
