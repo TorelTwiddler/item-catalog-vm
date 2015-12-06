@@ -1,6 +1,6 @@
 <!doctype html>
 <html>
-  <head>
+<head>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.1.4/semantic.css"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.1.4/semantic.min.js"></script>
@@ -10,25 +10,26 @@
     {% endblock %}
 
     <title>{% block title %}Item Catalog{% endblock %}</title>
-  </head>
-  <body>
-      <div class="ui fixed inverted menu">
-        <div class="ui container">
-          <a href="/" class="header item">
+</head>
+<body>
+<div class="ui fixed inverted menu">
+    <div class="ui container">
+        <a href="/" class="header item">
             <img class="logo" src="{{ url_for('static', filename='images/blue_shell.jpg') }}">
             Item Catalog
-          </a>
-          <a href="/" class="item">Home</a>
-        </div>
-      </div>
+        </a>
+        <a href="/" class="item">Home</a>
+        <a href="/login" class="item">Login</a>
+    </div>
+</div>
 
-      <div class="ui main container">
-        {% block content %}{% endblock %}
-      </div>
+<div class="ui main container">
+    {% block content %}{% endblock %}
+</div>
 
-      <div class="ui inverted vertical footer segment">
-        <div class="ui center aligned container">
-        </div>
-      </div>
-  </body>
+<div class="ui inverted vertical footer segment">
+    <div class="ui center aligned container">
+    </div>
+</div>
+</body>
 </html>

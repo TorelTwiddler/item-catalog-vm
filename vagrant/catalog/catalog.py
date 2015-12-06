@@ -5,6 +5,7 @@ catalog.py is a module used to access the "item_catalog" database.
 import psycopg2
 import contextlib
 from collections import namedtuple
+from user import User
 
 Category = namedtuple("Category", ['id', 'name', 'description'])
 Item = namedtuple("Item", ['id', 'name', 'category', 'description'])
@@ -34,14 +35,30 @@ def with_cursor():
         connection.close()
 
 
+def execute(sql, *args, **kwargs):
+    with with_cursor() as cursor:
+        return cursor.execute(sql, *args, **kwargs)
+
+
+def fetch_one(sql, *args, **kwargs):
+    with with_cursor() as cursor:
+        cursor.execute(sql, *args, **kwargs)
+        return cursor.fetchone()
+
+
+def fetch_all(sql, *args, **kwargs):
+    with with_cursor() as cursor:
+        cursor.execute(sql, *args, **kwargs)
+        return cursor.fetchall()
+
+
 def clear_database():
     """
     WARNING: This will truncate everything in your database!
     Only use this if you know what you're doing!
     """
-    with with_cursor() as cursor:
-        cursor.execute("TRUNCATE items;")
-        cursor.execute("TRUNCATE categories CASCADE;")
+    execute("TRUNCATE items;")
+    execute("TRUNCATE categories CASCADE;")
 
 
 def get_database_as_dict():
@@ -79,11 +96,9 @@ def create_item(name, category_id, description=""):
     """
     Creates an item in the database using the given parameters.
     """
-    with with_cursor() as cursor:
-        cursor.execute("INSERT INTO items (name, category, description) " \
-                       "VALUES (%s, %s, %s) RETURNING id, name, category, description;",
-                       (name, category_id, description))
-        return Item(*cursor.fetchone())
+    return Item(*fetch_one("INSERT INTO items (name, category, description) " \
+                           "VALUES (%s, %s, %s) RETURNING id, name, category, description;",
+                           (name, category_id, description)))
 
 
 def get_item(item_id):
@@ -97,41 +112,34 @@ def get_item(item_id):
     @raise: NotFoundException if the given id is not found
         in the database.
     """
-    with with_cursor() as cursor:
-        cursor.execute("SELECT id, name, category, description "
-                       "FROM items WHERE id = %s;", [item_id])
-        item_data = cursor.fetchone()
-        if not item_data:
-            raise NotFoundException("Item not found [{0}]".format(item_id))
-        return Item(*item_data)
+    item_data = fetch_one("SELECT id, name, category, description "
+                          "FROM items WHERE id = %s;", [item_id])
+    if not item_data:
+        raise NotFoundException("Item not found [{0}]".format(item_id))
+    return Item(*item_data)
 
 
 def update_item(item_id, name, category_id, description):
     """
     Updates the item with id of item_id with given parameters.
     """
-    with with_cursor() as cursor:
-        cursor.execute("UPDATE items SET name = %s, category = %s, description = %s " \
-                       "WHERE id = %s RETURNING id, name, category, description;",
-                       (name, category_id, description, item_id))
-        return Item(*cursor.fetchone())
+    return Item(*fetch_one("UPDATE items SET name = %s, category = %s, description = %s "
+                           "WHERE id = %s RETURNING id, name, category, description;",
+                           (name, category_id, description, item_id)))
 
 
 def delete_item(item_id):
     """
     Deletes the item with id of item_id.
     """
-    with with_cursor() as cursor:
-        cursor.execute("DELETE FROM items WHERE id = %s",
-                       (item_id,))
+    execute("DELETE FROM items WHERE id = %s", (item_id,))
 
 
 def get_items_by_category(category_id):
-    with with_cursor() as cursor:
-        cursor.execute("SELECT id, name, category, description FROM items "
-                       "WHERE category = %s;",
-                       (category_id, ))
-        return map(lambda x: Item(*x), cursor.fetchall())
+    data = fetch_all("SELECT id, name, category, description FROM items "
+                     "WHERE category = %s;",
+                     (category_id,))
+    return map(lambda x: Item(*x), data)
 
 
 # ----------------------------------------------------
@@ -142,63 +150,106 @@ def create_category(name, description=""):
     """
     Creates a category with the given parameters.
     """
-    with with_cursor() as cursor:
-        cursor.execute("INSERT INTO categories (name, description) " \
-                       "VALUES (%s, %s) RETURNING id, name, description;",
-                       (name, description))
-        return Category(*cursor.fetchone())
+    return Category(*fetch_one("INSERT INTO categories (name, description) "
+                               "VALUES (%s, %s) RETURNING id, name, description;",
+                               (name, description)))
 
 
 def get_category(category_id):
     """
     Gets the category with the given category_id.
     """
-    with with_cursor() as cursor:
-        cursor.execute("SELECT id, name, description " \
-                       "FROM categories WHERE id = %s;", [category_id])
-        category_data = cursor.fetchone()
-        if not category_data:
-            raise NotFoundException("Category not found [{0}]".format(category_id))
-        return Category(*category_data)
+    category_data = fetch_one("SELECT id, name, description "
+                              "FROM categories WHERE id = %s;",
+                              [category_id])
+    if not category_data:
+        raise NotFoundException("Category not found [{0}]".format(category_id))
+    return Category(*category_data)
 
 
 def get_category_by_name(name):
     """
     Get the category by the given name.
     """
-    with with_cursor() as cursor:
-        cursor.execute("SELECT id, name, description " \
-                       "FROM categories WHERE name = %s;", [name])
-        category_data = cursor.fetchone()
-        if not category_data:
-            raise NotFoundException("Category not found [{0}].".format(name))
-        return Category(*category_data)
+    category_data = fetch_one("SELECT id, name, description "
+                              "FROM categories WHERE name = %s;",
+                              [name])
+    if not category_data:
+        raise NotFoundException("Category not found [{0}].".format(name))
+    return Category(*category_data)
 
 
 def update_category(category_id, name, description):
     """
     Updates the category with the given category_id with given parameters.
     """
-    with with_cursor() as cursor:
-        cursor.execute("UPDATE categories SET name = %s, description = %s " \
-                       "WHERE id = %s RETURNING id, name, description;",
-                       (name, description, category_id))
-        return Category(*cursor.fetchone())
+    return Category(*fetch_one("UPDATE categories SET name = %s, description = %s "
+                               "WHERE id = %s RETURNING id, name, description;",
+                               (name, description, category_id)))
 
 
 def delete_category(category_id):
     """
     Deletes the category with the given category_id.
     """
-    with with_cursor() as cursor:
-        cursor.execute("DELETE FROM categories WHERE id = %s",
-                       (category_id,))
+    execute("DELETE FROM categories WHERE id = %s", (category_id,))
 
 
 def get_all_categories():
     """
     Returns a list of all of the categories available.
     """
-    with with_cursor() as cursor:
-        cursor.execute("SELECT id, name, description FROM categories;")
-        return map(lambda x: Category(*x), cursor.fetchall())
+    data = fetch_all("SELECT id, name, description FROM categories;")
+    return map(lambda x: Category(*x), data)
+
+
+# ----------------------------------------------------
+# --------- User Functions ---------------------------
+# ----------------------------------------------------
+
+
+def create_user(name, email, openid):
+    """
+    Creates a user with the given parameters.
+    """
+    return User(*fetch_one("INSERT INTO users (name, email, openid) "
+                           "VALUES (%s, %s, %s) RETURNING id, name, email, openid;",
+                           (name, email, openid)))
+
+
+def get_user(user_id):
+    """
+    Gets the user with the given user_id.
+    """
+    user_data = fetch_one("SELECT id, name, email, openid "
+              "FROM users WHERE id = %s;", [user_id])
+    if not user_data:
+        raise NotFoundException("User not found [{0}]".format(user_id))
+    return User(*user_data)
+
+
+def get_user_by_openid(openid):
+    """
+    Gets the user with the given openid.
+    """
+    user_data = fetch_one("SELECT id, name, email, openid "
+                          "FROM users WHERE openid = %s;", [openid])
+    if not user_data:
+        raise NotFoundException("User not found [{0}]".format(openid))
+    return User(*user_data)
+
+
+def update_user(user_id, name, email, openid):
+    """
+    Updates the user with the given user_id with given parameters.
+    """
+    return User(*fetch_one("UPDATE users SET name = %s, email = %s, openid = %s "
+                           "WHERE id = %s RETURNING id, name, email, openid;",
+                           (name, email, openid, user_id)))
+
+
+def delete_user(user_id):
+    """
+    Deletes the category with the given user_id.
+    """
+    execute("DELETE FROM users WHERE id = %s", (user_id,))

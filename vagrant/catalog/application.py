@@ -1,11 +1,44 @@
+import os
 import json
 import yaml
 import flask
 import catalog
 import category_forms
 import item_forms
+import flask_login
+import flask_openid
+import random
+import string
+
+from oauth2client.client import flow_from_clientsecrets
+from oauth2client.client import FlowExchangeError
+import httplib2
+import requests
+
+
+CLIENT_ID = json.loads(open('client_secret.json', 'r').read())['web']['client_id']
 
 app = flask.Flask(__name__)
+
+BASEDIR = os.path.split(__name__)[0]
+
+login_manager = flask_login.LoginManager()
+login_manager.init_app(app)
+oid = flask_openid.OpenID(app, os.path.join(BASEDIR, 'temp'))
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return catalog.get_user(user_id)
+
+
+@app.before_request
+def lookup_current_user():
+    flask.g.user = None
+    if 'openid' in flask.session:
+        openid = flask.session['openid']
+        flask.g.user = catalog.get_user_by_openid(openid=openid)
+
 
 @app.route("/")
 def root(messages=None):
@@ -13,6 +46,116 @@ def root(messages=None):
 
     return flask.render_template('home.html', categories=categories,
                                  messages=messages)
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login_user():
+    state = ''.join(random.choice(string.ascii_uppercase
+                                  + string.digits)
+                    for x in range(32))
+    flask.session['state'] = state
+    return flask.render_template('user_login.html', state=state)
+
+
+@app.route("/gconnect", methods=['POST'])
+def gconnect():
+    if flask.request.args.get('state') != flask.session['state']:
+        response = flask.make_response(json.dumps('Invalid state'), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+    code = flask.request.data
+    try:
+        oauth_flow = flow_from_clientsecrets('client_secret.json',
+                                             scope='')
+        oauth_flow.redirect_uri = 'postmessage'
+        credentials = oauth_flow.step2_exchange(code)
+    except FlowExchangeError:
+        response = flask.make_response(json.dumps('Failed to upgrade the'
+                                                  ' authorization code.'),
+                                       401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+    access_token = credentials.access_token
+    url = ('https://www.googleapis.com/oauth2/v1/tokeninfo'
+           '?access_token={}'.format(access_token))
+    h = httplib2.Http()
+    result = json.loads(h.request(url, 'GET')[1])
+    if result.get('error') is not None:
+        response = flask.make_response(json.dumps(
+            result.get('error')), 500)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+    gplus_id = credentials.id_token['sub']
+    if result['user_id'] != gplus_id:
+        response = flask.make_response(json.dumps(
+            "Token's user ID doesn't match given user ID."),
+            401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+    stored_credentials = flask.session.get('credentials')
+    stored_gplus_id = flask.session.get('gplus_id')
+    if stored_credentials is not None and \
+        gplus_id == stored_gplus_id:
+        response = flask.make_response(json.dumps(
+            'Current user is already connected.'), 200)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    flask.session['credentials'] = credentials.access_token
+    flask.session['gplus_id'] = gplus_id
+
+    userinfo_url = "https://www.googleapis.com/oauth2/v1/userinfo"
+    params = {'access_token': credentials.access_token,
+              'alt': 'json'}
+    answer = requests.get(userinfo_url, params=params)
+    data = json.loads(answer.text)
+
+    flask.session['username'] = data['name']
+    flask.session['picture'] = data['picture']
+    # flask.session['email'] = data['email']
+
+    output = "<h1>Welcome, {session['username']}!</h1>" \
+             "<img src=\"{session['picture']\">"
+    flask.flash("you are now logged in as {}".format(flask.session['username']))
+    return output
+
+
+@oid.after_login
+def create_or_login(resp):
+    flask.session['openid'] = resp.identity_url
+    user = catalog.get_user_by_openid(openid=resp.identity_url)
+    if user is not None:
+        flask.flash(u'Successfully signed in')
+        flask.g.user = user
+        return flask.redirect(oid.get_next_url())
+    return flask.redirect(flask.url_for('create_profile', next=oid.get_next_url(),
+                          name=resp.fullname or resp.nickname,
+                          email=resp.email))
+
+
+@app.route('/create-profile', methods=['GET', 'POST'])
+def create_profile():
+    if flask.g.user is not None or 'openid' not in flask.session:
+        return flask.redirect(flask.url_for('index'))
+    if flask.request.method == 'POST':
+        name = flask.request.form['name']
+        email = flask.request.form['email']
+        if not name:
+            flask.flash(u'Error: you have to provide a name')
+        elif '@' not in email:
+            flask.flash(u'Error: you have to enter a valid email address')
+        else:
+            flask.flash(u'Profile successfully created')
+            catalog.create_user(name, email, flask.session['openid'])
+            return flask.redirect(oid.get_next_url())
+    return flask.render_template('create_profile.html', next=oid.get_next_url())
+
+
+@app.route('/logout')
+def logout():
+    flask.session.pop('openid', None)
+    flask.flash(u'You were signed out')
+    return flask.redirect(oid.get_next_url())
 
 
 @app.route("/categories/<category_name>")
