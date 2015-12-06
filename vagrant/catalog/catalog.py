@@ -5,7 +5,6 @@ catalog.py is a module used to access the "item_catalog" database.
 import psycopg2
 import contextlib
 from collections import namedtuple
-from user import User
 
 Category = namedtuple("Category", ['id', 'name', 'description'])
 Item = namedtuple("Item", ['id', 'name', 'category', 'description'])
@@ -201,55 +200,3 @@ def get_all_categories():
     """
     data = fetch_all("SELECT id, name, description FROM categories;")
     return map(lambda x: Category(*x), data)
-
-
-# ----------------------------------------------------
-# --------- User Functions ---------------------------
-# ----------------------------------------------------
-
-
-def create_user(name, email, openid):
-    """
-    Creates a user with the given parameters.
-    """
-    return User(*fetch_one("INSERT INTO users (name, email, openid) "
-                           "VALUES (%s, %s, %s) RETURNING id, name, email, openid;",
-                           (name, email, openid)))
-
-
-def get_user(user_id):
-    """
-    Gets the user with the given user_id.
-    """
-    user_data = fetch_one("SELECT id, name, email, openid "
-              "FROM users WHERE id = %s;", [user_id])
-    if not user_data:
-        raise NotFoundException("User not found [{0}]".format(user_id))
-    return User(*user_data)
-
-
-def get_user_by_openid(openid):
-    """
-    Gets the user with the given openid.
-    """
-    user_data = fetch_one("SELECT id, name, email, openid "
-                          "FROM users WHERE openid = %s;", [openid])
-    if not user_data:
-        raise NotFoundException("User not found [{0}]".format(openid))
-    return User(*user_data)
-
-
-def update_user(user_id, name, email, openid):
-    """
-    Updates the user with the given user_id with given parameters.
-    """
-    return User(*fetch_one("UPDATE users SET name = %s, email = %s, openid = %s "
-                           "WHERE id = %s RETURNING id, name, email, openid;",
-                           (name, email, openid, user_id)))
-
-
-def delete_user(user_id):
-    """
-    Deletes the category with the given user_id.
-    """
-    execute("DELETE FROM users WHERE id = %s", (user_id,))

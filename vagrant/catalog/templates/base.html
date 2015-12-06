@@ -19,7 +19,11 @@
             Item Catalog
         </a>
         <a href="/" class="item">Home</a>
-        <a href="/login" class="item">Login</a>
+        {% if session['username'] %}
+            <a href="/gdisconnect" class="item">Logout</a>
+        {% else %}
+            <a href="/login" class="item">Login</a>
+        {% endif %}
     </div>
 </div>
 

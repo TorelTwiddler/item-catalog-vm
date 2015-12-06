@@ -19,10 +19,3 @@ CREATE TABLE items(
 	category    INTEGER REFERENCES categories(id),
 	description VARCHAR(500)
 );
-
-CREATE TABLE users(
-	id			SERIAL PRIMARY KEY,
-	username	VARCHAR(20) NOT NULL,
-	email			VARCHAR(50) NOT NULL,
-	openid		VARCHAR(256)
-);
