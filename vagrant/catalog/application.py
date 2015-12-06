@@ -42,12 +42,17 @@ def root(messages=None):
 
 
 @app.route("/login", methods=["GET", "POST"])
-def login_user():
+def login():
     state = ''.join(random.choice(string.ascii_uppercase
                                   + string.digits)
                     for x in range(32))
     flask.session['state'] = state
-    return flask.render_template('user_login.html', state=state)
+    return flask.render_template('login.html', state=state)
+
+
+@app.route("/logout")
+def logout():
+    return flask.render_template('logout.html')
 
 
 @app.route('/gconnect', methods=['POST'])

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <p class="info">Logging out...</p>
+    <div id="result"></div>
+    <script>
+        $.ajax({
+            type: 'GET',
+            url: '/gdisconnect',
+            processData: false,
+            contentType: 'application/octet-stream; charset=utf-8',
+            success: function(result) {
+                if (result) {
+                    $('#result').html('Logout Successful!</br>' + result + '</br>Redirecting...')
+                    setTimeout(function() {
+                        window.location.href = "/";
+                    }, 4000);
+                } else if (result['error']) {
+                    console.log('Error: ' + result['error']);
+                } else {
+                    $('#result').html('Failed to make server-side call');
+                }
+            }
+        })
+    </script>
+{% endblock %}
