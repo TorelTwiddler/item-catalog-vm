@@ -21,11 +21,9 @@ BASEDIR = os.path.split(__name__)[0]
 
 
 def require_login(function):
+    """Decorator used to require login for the function."""
     @wraps(function)
     def wrapper(*args, **kwargs):
-        print 'in wrapper'
-        from pprint import pprint
-        pprint(flask.session)
         if 'username' not in flask.session:
             return flask.redirect('/login')
         else:
@@ -35,6 +33,11 @@ def require_login(function):
 
 @app.route("/")
 def root(messages=None):
+    """The root homepage.
+
+    :param messages: A dictionary of messages that will display
+    at the top of the homepage.
+    """
     categories = catalog.get_all_categories()
 
     return flask.render_template('home.html', categories=categories,
@@ -43,6 +46,7 @@ def root(messages=None):
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    """The login page."""
     state = ''.join(random.choice(string.ascii_uppercase
                                   + string.digits)
                     for x in range(32))
@@ -52,11 +56,15 @@ def login():
 
 @app.route("/logout")
 def logout():
+    """The logout page."""
     return flask.render_template('logout.html')
 
 
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
+    """The connector for Google. This will attempt to authenticate
+    the user with their Google account. This returns a response
+    based on if it was successful or not."""
     # Validate state token
     if flask.request.args.get('state') != flask.session['state']:
         response = flask.make_response(json.dumps('Invalid state parameter.'), 401)
@@ -99,7 +107,6 @@ def gconnect():
     if result['issued_to'] != CLIENT_ID:
         response = flask.make_response(
             json.dumps("Token's client ID does not match app's."), 401)
-        print "Token's client ID does not match app's."
         response.headers['Content-Type'] = 'application/json'
         return response
 
@@ -134,27 +141,23 @@ def gconnect():
     output += flask.session['picture']
     output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
     flask.flash("you are now logged in as %s" % flask.session['username'])
-    print "done!"
     return output
 
 
 @app.route('/gdisconnect')
 def gdisconnect():
+    """Disconnects the Google user from the session. This
+    returns a response based on if it was successful or not."""
     access_token = flask.session.get('access_token')
     if not access_token:
         return flask.redirect('/')
-    print 'In gdisconnect access token is', access_token
-    print 'User name is: ', flask.session['username']
     if access_token is None:
-        print 'Access Token is None'
         response = flask.make_response(json.dumps('Current user not connected.'), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
     url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % flask.session['access_token']
     h = httplib2.Http()
     result = h.request(url, 'GET')[0]
-    print 'result is '
-    print result
     if result['status'] == '200':
         del flask.session['access_token']
         del flask.session['gplus_id']
@@ -172,6 +175,10 @@ def gdisconnect():
 
 @app.route("/categories/<category_name>")
 def category(category_name):
+    """Returns the details of a category.
+
+    :param category_name: Category name to use as a lookup.
+    """
     category_item = catalog.get_category_by_name(category_name)
     items = catalog.get_items_by_category(category_item.id)
     return flask.render_template('category.html',
@@ -182,6 +189,10 @@ def category(category_name):
 @app.route("/categories/<category_name>/edit", methods=["GET", "POST"])
 @require_login
 def category_edit(category_name):
+    """Returns the edit page for the category.
+
+    :param category_name: Category name to use as a lookup.
+    """
     form = category_forms.CategoryEditForm()
     category_object = catalog.get_category_by_name(category_name)
     if form.validate_on_submit():
@@ -189,7 +200,6 @@ def category_edit(category_name):
                                 form.name.data,
                                 form.description.data)
         return root({'success': "Category updated successfully!"})
-    print form.errors
     form.name.data = category_object.name
     form.description.data = category_object.description
     return flask.render_template('category_edit.html', form=form,
@@ -199,17 +209,21 @@ def category_edit(category_name):
 @app.route("/category_add", methods=["GET", "POST"])
 @require_login
 def category_add():
+    """Returns a page to add a new Category."""
     form = category_forms.CategoryAddForm()
     if form.validate_on_submit():
         catalog.create_category(form.name.data, form.description.data)
         return root({'success': "Category added successfully!"})
-    print form.errors
     return flask.render_template('category_add.html', form=form)
 
 
 @app.route("/categories/<category_name>/delete", methods=["GET", "POST"])
 @require_login
 def category_delete(category_name):
+    """Returns the page to delete the Category.
+
+    :param category_name: Category name to use as a lookup.
+    """
     form = category_forms.CategoryDeleteForm()
     category_object = catalog.get_category_by_name(category_name)
     if form.validate_on_submit():
@@ -221,6 +235,10 @@ def category_delete(category_name):
 
 @app.route("/items/<int:item_id>")
 def item(item_id):
+    """Returns the Item detail page.
+
+    :param item_id: database id of the requested item.
+    """
     item_object = catalog.get_item(item_id)
     return flask.render_template('item.html', item=item_object)
 
@@ -228,6 +246,10 @@ def item(item_id):
 @app.route("/items/<int:item_id>/edit", methods=['GET', 'POST'])
 @require_login
 def item_edit(item_id):
+    """Returns a page to edit the given item.
+
+    :param item_id: database id of the requested item.
+    """
     form = item_forms.ItemEditForm()
     form.category.choices = [(x.id, x.name) for x in catalog.get_all_categories()]
     item_object = catalog.get_item(item_id)
@@ -237,7 +259,6 @@ def item_edit(item_id):
                             form.category.data,
                             form.description.data)
         return root({'success': "Item updated successfully!"})
-    print form.errors
     form.name.data = item_object.name
     form.category.data = item_object.category
     form.description.data = item_object.description
@@ -248,6 +269,10 @@ def item_edit(item_id):
 @app.route("/items/<int:item_id>/delete", methods=['GET', 'POST'])
 @require_login
 def item_delete(item_id):
+    """Returns the page to delete the given item.
+
+    :param item_id: database id of the requested item.
+    """
     form = item_forms.ItemDeleteForm()
     item_object = catalog.get_item(item_id)
     if form.validate_on_submit():
@@ -260,23 +285,25 @@ def item_delete(item_id):
 @app.route("/items/add", methods=['GET', 'POST'])
 @require_login
 def item_add():
+    """Returns the page to add a new Item."""
     form = item_forms.ItemAddForm()
     form.category.choices = [(x.id, x.name) for x in catalog.get_all_categories()]
     if form.validate_on_submit():
         catalog.create_item(form.name.data, int(form.category.data),
                             form.description.data)
         return root({'success': "Item added successfully!"})
-    print form.errors
     return flask.render_template('item_add.html', form=form)
 
 
 @app.route("/catalog.json")
 def json_endpoint():
+    """Returns the data as a json blob."""
     return json.dumps(catalog.get_database_as_dict())
 
 
 @app.route("/catalog.yaml")
 def yaml_endpoint():
+    """Returns the data as a yaml blob."""
     return yaml.dump(catalog.get_database_as_dict())
 
 
