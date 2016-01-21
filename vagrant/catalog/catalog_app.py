@@ -13,12 +13,24 @@ from oauth2client.client import FlowExchangeError
 import httplib2
 import requests
 
-CLIENT_ID = json.loads(open('client_secret.json', 'r').read())['web']['client_id']
+BASEDIR = os.path.split(__file__)[0]
+
+CLIENT_SECRET_PATH = os.path.join(BASEDIR, 'client_secret.json')
+
+CLIENT_ID = json.loads(open(CLIENT_SECRET_PATH, 'r').read())['web']['client_id']
 
 app = flask.Flask(__name__)
 
-BASEDIR = os.path.split(__name__)[0]
+app.debug = True
 
+import logging
+
+file_handler = logging.FileHandler('/var/log/flask/flask.log')
+file_handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+app.logger.addHandler(file_handler)
+app.logger.info("info")
 
 def require_login(function):
     """Decorator used to require login for the function."""
@@ -75,7 +87,7 @@ def gconnect():
 
     try:
         # Upgrade the authorization code into a credentials object
-        oauth_flow = flow_from_clientsecrets('client_secret.json', scope='')
+        oauth_flow = flow_from_clientsecrets(CLIENT_SECRET_PATH, scope='')
         oauth_flow.redirect_uri = 'postmessage'
         credentials = oauth_flow.step2_exchange(code)
     except FlowExchangeError:

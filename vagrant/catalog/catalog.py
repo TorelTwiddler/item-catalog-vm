@@ -21,7 +21,8 @@ def with_cursor():
     the cursor and the connection will always close regardless
     of errors.
     """
-    connection = psycopg2.connect("dbname=item_catalog")
+    connection = psycopg2.connect(database="item_catalog", user='catalog',
+        host='localhost', password='catalog')
     cursor = connection.cursor()
     try:
         yield cursor
